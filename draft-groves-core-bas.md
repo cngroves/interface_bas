@@ -1,8 +1,8 @@
 ---
 title: "Binding Attribute Scope"
 abbrev: Binding Att. Scope
-docname: draft-groves-core-bas-latest
-date: 2017-02-21
+docname: draft-groves-core-bas-01
+date: 2017-04-20
 category: std
 
 ipr: trust200902
@@ -16,12 +16,12 @@ pi: [toc, sortrefs, symrefs]
 author:
 - ins: C. Groves
   name: Christian Groves
-  organization: Huawei
+  organization: 
   street: '' 
   city: ''
   code: ''
   country: Australia
-  email: Christian.Groves@mail01.huawei.com
+  email: cngroves.std@gmail.com
 - ins: W. Yang
   name: Weiwei Yang
   organization: Huawei
@@ -64,13 +64,10 @@ The "Binding Attribute Scope" (bas) attribute is set on a collection and is used
 
 Section {{bindingattributes}} below indicates the text that would need to be added to {{I-D.ietf-core-dynlink}} to add the Binding Attribute Scope attribute.
 
-**Editor's note: Another option for a "Alternate Resource" was considered but some issues were identified. The "Alternate Resource" (ar) attribute is set on the observed resource and is used to indicate the resource whose value is returned as an alternate to the observed resource's value. 
-This approach is logically different to binding attribute scope approach in that a request on one resource results in the value of another resource being returned. It is also logically different that the client and server do not have the same view of the resource as a result of an observe. The client has a view of another server resource. This option could also return a collection if the alternate resource has been created as a collection. This in itself may cause some issues. In this case the Content-Format returned would not be from the original resource but from the alternate resource. If a client indicate an accept option with a particular Content-Format for the alternate resource the original resource may not support it. Also a the Content-Format (ct) Web Linking Attribute would be unlikely to return a content-format for the alternate resource.**
-
 Usage of a collection
 ---------------------
 
-The current text of {{I-D.ietf-core-interfaces}} indicates that observe may be supported on an item in a collection not on the collection itself. The "bas" binding attribute is only used on collection (e.g. batch, linked-batch) resources which enables the use of the binding attributes from {{I-D.ietf-core-dynlink}} on a collection. The "bas" attribute points to one item in the collection.
+{{I-D.ietf-core-interfaces}} indicates that a collection may be observed. An observation returns a representation of the entire collection. The "bas" binding attribute is only used on collection (e.g. batch, linked-batch) resources which enables the use of the binding attributes from {{I-D.ietf-core-dynlink}} on a collection. The "bas" attribute points to one item in the collection.
 
 This approach does have the downside that it requires the use of a collection interface even if a single resource is required. The scope of the synchronization is limited to the current collection. However the use of a collection to return the information does seem to fit with the principle that a GET of a resource should return the same representation as a notification.
 
@@ -131,6 +128,8 @@ The collection containing the Observed resource and the additional resources to 
 
 The client then creates a binding (e.g. an Observe) with the collection indicating the required binding attributes (e.g. "gt", "lt" etc.) and to which sub-resource these apply through the use of the "bas" binding attribute containing a URI-path. 
 
+A client may create multiple bindings for the collection. When using Observe a client may use mutliple GET Observes with different queury parameters. Each observation is identified through the use of different Tokens.
+
 If the server determines that the "bas" attribute contains an unknown URI-path then it responds with response code 4.04 "Not Found".
 
 State sychronisation occurs when the sub-resource (item) value meets the conditions indicated by the binding attributes. When state synchronisation occurs the collection resource (including sub-resources) will be synchronised.
@@ -164,6 +163,7 @@ A Req: GET /s?bas="temp"&gt=37
 would produce the following when temp exceeds 37:
 
   Res: 2.05 Content (application/senml+json)
+  Token: 0x4a
   {"e":[
      { "n": "/s/light", "v": 123, "u": "lx" },
      { "n": "/s/temp", "v": 38, "u": "degC" },
@@ -171,7 +171,26 @@ would produce the following when temp exceeds 37:
   }
 ~~~~
 
+### Example 2 - Mutliple Observes
 
+In addition to the GET in example 1 the client could also request a notification when the humidity raises above 90%.
+
+~~~~
+A Req: GET /s?bas="humidity"&gt=90
+          Token: 0x4b
+          Observe: 0
+would produce the following when temp exceeds 37:
+
+  Res: 2.05 Content (application/senml+json)
+  Token: 0x4b
+  {"e":[
+     { "n": "/s/light", "v": 123, "u": "lx" },
+     { "n": "/s/temp", "v": 16, "u": "degC" },
+     { "n": "/s/humidity", "v": 92, "u": "%RH" }],
+  }
+~~~~
+
+*Editor's note: Need to add example for pmin*
 
 Security Considerations
 =======================
@@ -186,10 +205,18 @@ None.
 Acknowledgements
 ================
 
-Michael Koster for his comments and suggestion of the FETCH approach. Friedhelm Rodermund for stimulating discussion of the use case.
+Michael Koster for his comments and suggestion of the FETCH approach. Friedhelm Rodermund for stimulating discussion of the use case. Mojan Mohajer for raising the multiple observes on a collection use case.
 
 Changelog
 =========
+
+draft-groves-core-bas-01
+
+* Section 2: Removed editor's note on alternate solution
+
+* Section 2.1: Changed language around observe on collections.
+
+* Section 4.1: Added text regarding multiple observations.
 
 draft-groves-core-bas-00
 
